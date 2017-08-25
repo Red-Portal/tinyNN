@@ -2,7 +2,9 @@
 #define _PERCEPTRON_HPP_
 
 #include <blaze/math/StaticMatrix.h>
-#include <trainable.hpp>
+#include <blaze/math/StaticVector.h>
+
+#include "trainable.hpp"
 
 template<typename T, size_t Xdim, size_t Ydim>
 using matrix = blaze::StaticMatrix<float, Xdim, Ydim>;
@@ -13,7 +15,7 @@ using vector = blaze::StaticVector<float, Ydim>;
 namespace perceptron
 {
     template<typename T, size_t Xdim, size_t Ydim>
-    class perceptron : trainable<Xdim, Ydim>
+    class perceptron : trainable<T, Xdim, Ydim>
     {
     private:
         vector<T, Ydim> weight;
@@ -25,8 +27,8 @@ namespace perceptron
         perceptron();
 
         vector<T, Ydim>
-        operator()(vector<T, Xdim, Ydim> const& input_x) const;
-    }
+        operator()(matrix<T, Xdim, Ydim> const& input_x) const;
+    };
 }
 
 #endif

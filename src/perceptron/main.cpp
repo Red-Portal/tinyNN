@@ -1,11 +1,12 @@
 #include <chrono>
-#include <thread>
-#include <future>
 #include <random>
 #include <functional>
 #include <iostream>
 
 #include <blaze/math/DynamicMatrix.h>
+
+#include "perceptron.hpp"
+#include "trainer.hpp"
 
 namespace chrono = std::chrono;
 
@@ -34,7 +35,7 @@ int main()
     auto training_data = random_matrix(3, 100, -1, 1);
     
     auto start = std::chrono::steady_clock::now();
-
+    
     auto end = std::chrono::steady_clock::now();
 
     std::cout << chrono::duration_cast<
