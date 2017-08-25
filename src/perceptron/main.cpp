@@ -3,39 +3,48 @@
 #include <functional>
 #include <iostream>
 
-#include <blaze/math/DynamicMatrix.h>
+#include <blaze/math/StaticMatrix.h>
 
 #include "perceptron.hpp"
 #include "trainer.hpp"
 
 namespace chrono = std::chrono;
 
-// template<typename T>
-// blaze::DynamicMatrix<T>
-// random_matrix(size_t x, size_t y, T bottom, T top)
-// {
-//     static std::random_device rand_div;
-//     static std::mt19937_64 mersenne(rand_div());
-//     static std::uniform_real_distribution<T> dist(bottom, top);
+template<size_t Xdim, size_t Ydim, typename T>
+blaze::StaticMatrix<T, Xdim, Ydim>
+random_matrix(T bottom, T top)
+{
+    static std::random_device rand_div;
+    static std::mt19937_64 mersenne(rand_div());
+    static std::uniform_real_distribution<T> dist(bottom, top);
 
-//     auto mat = blaze::DynamicMatrix<float>(x, y);
-//     for(auto i = 0u; i < x; ++i)
-//     {
-//         for(auto j = 0u; j < y; ++j)
-//         {
-//             mat(i, j) = dist(mersenne);
-//         }
-//     }
+    blaze::StaticMatrix<T, Xdim, Ydim> matrix{}; 
+    for(auto i = 0u; i < Xdim; ++i)
+    {
+        int count = 0;
+        for(auto j = 0u; j < Ydim - 1; ++j)
+        {
+            auto number = dist(mersenne);
+            matrix(i, j) = number;
+            count += number;
+        }
 
-//     return mat;
-// }
+        if(count > 0)
+            matrix(i, Ydim - 1) = 1;
+        else
+            matrix(i, Ydim - 1) = 0;
+    }
+    return matrix;
+}
 
 int main()
 {
-    // auto training_data = random_matrix(3, 100, -1, 1);
-    
+    auto matrix = random_matrix<3, 100, double>(-10.0, 10.0);
+
     auto start = std::chrono::steady_clock::now();
-    
+    auto _trainer =
+        perceptron::trainer<double, 3, 100>(0.2, 100, true);
+    auto perceptron = _trainer.train(matrix);
     auto end = std::chrono::steady_clock::now();
 
     std::cout << chrono::duration_cast<

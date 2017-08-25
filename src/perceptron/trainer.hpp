@@ -24,8 +24,9 @@ namespace perceptron
     class trainer
     {
         using column =
-            typename blaze::Column<matrix<float, Xdim, Ydim>>;
+            typename blaze::Column<matrix<T, Xdim, Ydim>>;
     private:
+        bool _verbose;
         double _eta;
         uint64_t _max_iterations;
         std::shared_ptr<perceptron<T, Xdim, Ydim>> _trainee;
@@ -42,9 +43,10 @@ namespace perceptron
         T predict(vector<T, Xdim> const& data_set) const;
         
     public:
-        trainer(double eta, uint64_t max_iterations);
+        trainer(double eta, uint64_t max_iterations,
+                bool verbose = true);
 
-        inline perceptron<T, Xdim, Ydim>
+        perceptron<T, Xdim, Ydim>
         train(matrix<T, Xdim, Ydim> const& train_data);
     };
 

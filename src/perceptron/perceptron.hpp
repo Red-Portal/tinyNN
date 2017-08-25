@@ -1,6 +1,8 @@
 #ifndef _PERCEPTRON_HPP_
 #define _PERCEPTRON_HPP_
 
+#include <cmath>
+
 #include <blaze/math/StaticMatrix.h>
 #include <blaze/math/StaticVector.h>
 
@@ -22,6 +24,8 @@ namespace perceptron
         virtual void
         update_weight(vector<T, Ydim> const& correction) final;
 
+        inline T sigmoid(T) const noexcept;
+
     public:
         perceptron();
 
@@ -31,6 +35,18 @@ namespace perceptron
         virtual vector<T, Ydim>
         operator()(matrix<T, Xdim, Ydim> const& input_x) const final;
     };
+
+    
+    template<typename T, size_t Xdim, size_t Ydim>
+    inline T
+    perceptron<T, Xdim, Ydim>::
+    sigmoid(T in) const noexcept
+    {
+        auto in_d = static_cast<double>(in);
+        auto result = std::exp(in_d) / (std::exp(in_d) + 1);
+
+        return static_cast<T>(result);
+    }
 }
 
 #endif

@@ -16,7 +16,7 @@ namespace perceptron
         update_weight(vector<T, Ydim> const& correction) = 0;
 
     public:
-        virtual vector<T, Ydim>
+        virtual T
         operator()(vector<T, Xdim> const& input) const = 0;
     };
 }

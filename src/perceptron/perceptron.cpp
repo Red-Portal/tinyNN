@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "perceptron.hpp"
 
 namespace perceptron
@@ -15,7 +17,13 @@ namespace perceptron
     perceptron<T, Xdim, Ydim>::
     operator()(matrix<T, Xdim, Ydim> const& input_x) const
     {
-        return blaze::dot(input_x, weight);
+        auto prod = blaze::dot(input_x, weight);
+
+        std::transform(prod.begin(), prod.end(),
+                       prod.begin(),
+                       &perceptron<T, Xdim, Ydim>::sigmoid);
+
+        return prod;
     }
 
     template<typename T, size_t Xdim, size_t Ydim>
@@ -23,6 +31,6 @@ namespace perceptron
     perceptron<T, Xdim, Ydim>::
     operator()(vector<T, Xdim> const& input_x) const
     {
-        return blaze::dot(input_x, weight);
+        return sigmoid(blaze::dot(input_x, weight));
     }
 }

@@ -4,18 +4,17 @@ project(perceptron)
 set(SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/main.cpp
     ${PROJECT_SOURCE_DIR}/perceptron.cpp
-    # ${PROJECT_SOURCE_DIR}/trainable.cpp
     ${PROJECT_SOURCE_DIR}/trainer.cpp)
 
 message("[ Source files for ${PROJECT_NAME} ]")
-foreach(SOURCE_FILE ${PROJECT_SOURCE_FILES})
+foreach(SOURCE_FILE ${SOURCE_FILES})
     message(STATUS "${SOURCE_FILE}")
 endforeach()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 set(BUILD_FLAGS
-    "${CMAKE_CXX_FLAGS} -O3 -fPIC -Wall -Wextra")
+    "${CMAKE_CXX_FLAGS} -O3 -Wall -Wextra")
 message("C++ flags = ${BUILD_FLAGS}")
 
 set_target_properties(${PROJECT_NAME}
