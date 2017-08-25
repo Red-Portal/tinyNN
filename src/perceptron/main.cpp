@@ -47,6 +47,14 @@ int main()
     auto perceptron = _trainer.train(matrix);
     auto end = std::chrono::steady_clock::now();
 
+    blaze::StaticVector<double, 3> test;
+    test[0] = 1;
+    test[0] = 1;
+    test[0] = 1;
+    auto result  = perceptron(test);
+
+    std::cout << "result: " << result << std::endl;
+
     std::cout << chrono::duration_cast<
         chrono::milliseconds>(end - start).count()
               << std::endl;
