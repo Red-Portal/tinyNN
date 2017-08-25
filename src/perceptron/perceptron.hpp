@@ -6,28 +6,30 @@
 
 #include "trainable.hpp"
 
-template<typename T, size_t Xdim, size_t Ydim>
-using matrix = blaze::StaticMatrix<float, Xdim, Ydim>;
-
-template<typename T, size_t Ydim>
-using vector = blaze::StaticVector<float, Ydim>;
-
 namespace perceptron
 {
+    template<typename T, size_t Xdim, size_t Ydim>
+    using matrix = blaze::StaticMatrix<T, Xdim, Ydim>;
+
+    template<typename T, size_t Ydim>
+    using vector = blaze::StaticVector<T, Ydim>;
+
     template<typename T, size_t Xdim, size_t Ydim>
     class perceptron : trainable<T, Xdim, Ydim>
     {
     private:
         vector<T, Ydim> weight;
-
         virtual void
-        update_weight(vector<T, Ydim> const& error) override final;
+        update_weight(vector<T, Ydim> const& correction) final;
 
     public:
         perceptron();
 
-        vector<T, Ydim>
-        operator()(matrix<T, Xdim, Ydim> const& input_x) const;
+        virtual T
+        operator()(vector<T, Xdim> const& input_x) const final;
+
+        virtual vector<T, Ydim>
+        operator()(matrix<T, Xdim, Ydim> const& input_x) const final;
     };
 }
 

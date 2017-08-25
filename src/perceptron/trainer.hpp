@@ -7,35 +7,39 @@
 #include <random>
 
 #include <blaze/math/StaticMatrix.h>
-#include <blaze/math/Submatrix.h>
+#include <blaze/math/Column.h>
 
 #include "trainable.hpp"
 #include "perceptron.hpp"
 
-template<typename T, size_t Xdim, size_t Ydim>
-using matrix = blaze::StaticMatrix<float, Xdim, Ydim>;
-
-
 namespace perceptron
 {
     template<typename T, size_t Xdim, size_t Ydim>
+    using matrix = blaze::StaticMatrix<T, Xdim, Ydim>;
+
+    template<typename T, size_t Ydim>
+    using vector = blaze::StaticVector<T, Ydim>;
+
+    template<typename T, size_t Xdim, size_t Ydim>
     class trainer
     {
-        using matrix_view =
-            typename blaze::Submatrix<matrix<float, Xdim, Ydim>>;
+        using column =
+            typename blaze::Column<matrix<float, Xdim, Ydim>>;
     private:
         double _eta;
         uint64_t _max_iterations;
-        std::shared_ptr<perceptron<T, Xdim, Ydim>> _trainable;
+        std::shared_ptr<perceptron<T, Xdim, Ydim>> _trainee;
         std::vector<T> _error;
-        std::mt19937_64 _random_engine;
-        std::uniform_int_distribution<size_t> _distr;
+        std::mt19937 _random_engine;
+        std::uniform_int_distribution<uint32_t> _distr;
 
-        inline matrix_view const& 
-        pick_data_random(matrix<T, Xdim, Ydim> const& data_set) const;
+        inline column const& 
+        pick_data_random(matrix<T, Xdim, Ydim> const& data_set);
 
-        vector<T, Ydim> const&
-        train_set(matrix_view const& data_set) const;
+        inline vector<T, Xdim>
+        col_to_vector(column const& vec) const;
+
+        T predict(vector<T, Xdim> const& data_set) const;
         
     public:
         trainer(double eta, uint64_t max_iterations);
@@ -45,12 +49,24 @@ namespace perceptron
     };
 
     template<typename T, size_t Xdim, size_t Ydim>
-    typename trainer<T, Xdim, Ydim>::matrix_view const& 
+    typename trainer<T, Xdim, Ydim>::column const& 
     trainer<T, Xdim, Ydim>::
-    pick_data_random(matrix<T, Xdim, Ydim> const& data_set) const
+    pick_data_random(matrix<T, Xdim, Ydim> const& data_set) 
     {
-        size_t idx = _distr(_random_engine);
-        return {data_set.begin(idx), data_set.end(idx)};
+        auto idx = _distr(_random_engine);
+        return colunm(data_set, idx);
+    }
+
+    template<typename T, size_t Xdim, size_t Ydim>
+    vector<T, Xdim>
+    trainer<T, Xdim, Ydim>::
+    col_to_vector(
+        typename trainer<T, Xdim, Ydim>::column const& data_set) const
+    {
+        vector<T, Xdim> input_vector;
+        
+        std::copy(data_set.begin(), data_set.end(),
+                  input_vector.begin());
     }
 }
 

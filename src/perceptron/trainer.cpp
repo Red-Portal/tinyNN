@@ -1,19 +1,53 @@
-#include "learning_device.hpp"
+#include <algorithm>
+
+#include "trainer.hpp"
 #include "trainable.hpp"
 
 namespace perceptron
 {
-    trainer::
-    trainer(double eta, int64_t max_iterations)
+    template<typename T, size_t Xdim, size_t Ydim>
+    trainer<T, Xdim, Ydim>::
+    trainer(double eta, uint64_t max_iterations)
         :_eta(eta),
          _max_iterations(max_iterations),
-         _perceptron()
-    {}
-
-    perceptron
-    trainer::
-    train()
+         _trainee(nullptr),
+         _error(),
+         _distr(0, Ydim - 2)
     {
-        
+        std::random_device seed_gen;
+        _random_engine.seed(seed_gen());
+
+        _error.reserve(max_iterations);
+    }
+
+
+    template<typename T, size_t Xdim, size_t Ydim>
+    T
+    trainer<T, Xdim, Ydim>::
+    predict(vector<T, Xdim> const& data_set) const
+    {
+        T error = (*_trainee)(data_set);
+        return error;
+    }
+
+    template<typename T, size_t Xdim, size_t Ydim>
+    perceptron<T, Xdim, Ydim>
+    trainer<T, Xdim, Ydim>::
+    train(matrix<T, Xdim, Ydim> const& train_data)
+    {
+        auto _perceptron =
+            std::make_shared<perceptron<T, Xdim, Ydim>>();
+        auto _trainable = _perceptron;
+
+        for(size_t it = 0; it < _max_iterations; ++it)
+        {
+            auto selected_data_range =
+                col_to_vector(pick_data_random(train_data));
+
+            T error = predict(selected_data_range);
+            _error.push_back(error);
+            auto correction = _eta * error * selected_data_range;
+            _trainee->update_weight(correction);
+        }
     }
 }
