@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 project(perceptron)
 
 set(SOURCE_FILES
-    ${PROJECT_SOURCE_DIR}/main.cpp
-    ${PROJECT_SOURCE_DIR}/perceptron.cpp
-    ${PROJECT_SOURCE_DIR}/trainer.cpp)
+    ${PROJECT_SOURCE_DIR}/main.cpp)
 
 message("[ Source files for ${PROJECT_NAME} ]")
 foreach(SOURCE_FILE ${SOURCE_FILES})
@@ -22,9 +20,11 @@ set_target_properties(${PROJECT_NAME}
     COMPILE_FLAGS "${BUILD_FLAGS}"
     CXX_STANDARD 17)
 
+message("blaze include: ${blaze_INCLUDE_DIR}" )
+
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-    "../../blaze")
+    ${blaze_INCLUDE_DIR})
 
 ## Thread library dependency
 find_package(Threads REQUIRED)

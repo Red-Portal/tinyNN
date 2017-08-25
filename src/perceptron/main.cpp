@@ -4,6 +4,8 @@
 #include <iostream>
 
 #include <blaze/math/StaticMatrix.h>
+#include <blaze/math/DynamicVector.h>
+#include <blaze/math/DynamicMatrix.h>
 
 #include "perceptron.hpp"
 #include "trainer.hpp"
@@ -40,18 +42,18 @@ random_matrix(T bottom, T top)
 int main()
 {
     auto matrix = random_matrix<3, 100, double>(-10.0, 10.0);
+    auto dyn_matrix = blaze::DynamicMatrix<double>(matrix);
 
     auto start = std::chrono::steady_clock::now();
-    auto _trainer =
-        perceptron::trainer<double, 3, 100>(0.2, 100, true);
-    auto perceptron = _trainer.train(matrix);
+    auto _trainer = tnn::trainer<double, 3>(0.2, 100, true);
+    auto model  = _trainer.train(matrix);
     auto end = std::chrono::steady_clock::now();
 
     blaze::StaticVector<double, 3> test;
     test[0] = 1;
     test[0] = 1;
     test[0] = 1;
-    auto result  = perceptron(test);
+    auto result  = model(test);
 
     std::cout << "result: " << result << std::endl;
 

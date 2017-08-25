@@ -4,49 +4,45 @@
 #include <cmath>
 
 #include <blaze/math/StaticMatrix.h>
+#include <blaze/math/DynamicMatrix.h>
 #include <blaze/math/StaticVector.h>
+#include <blaze/math/DynamicVector.h>
+#include <blaze/math/blas/gemv.h>
 
 #include "trainable.hpp"
 
-namespace perceptron
+namespace tnn
 {
-    template<typename T, size_t Xdim, size_t Ydim>
-    using matrix = blaze::StaticMatrix<T, Xdim, Ydim>;
+    template<typename T>
+    using matrix_dyn = blaze::DynamicMatrix<T>;
 
-    template<typename T, size_t Ydim>
-    using vector = blaze::StaticVector<T, Ydim>;
+    template<typename T, size_t Xdim>
+    using vector = blaze::StaticVector<T, Xdim>;
 
-    template<typename T, size_t Xdim, size_t Ydim>
-    class perceptron : trainable<T, Xdim, Ydim>
+    template<typename T>
+    using vector_dyn = blaze::DynamicVector<T>;
+
+    template<typename T, size_t InSize>
+    class perceptron : trainable<T, InSize>
     {
     private:
-        vector<T, Ydim> weight;
+        vector<T, InSize> weight;
+
         virtual void
-        update_weight(vector<T, Ydim> const& correction) final;
+        update_weight(vector<T, InSize> const& correction) final;
 
         inline T sigmoid(T) const noexcept;
 
     public:
-        perceptron();
+        inline perceptron() = default;
 
         virtual T
-        operator()(vector<T, Xdim> const& input_x) const final;
+        operator()(vector<T, InSize> const& input_x) const final;
 
-        virtual vector<T, Ydim>
-        operator()(matrix<T, Xdim, Ydim> const& input_x) const final;
+        virtual vector_dyn<T>
+        operator()(matrix_dyn<T> const& input_x) const final;
     };
-
-    
-    template<typename T, size_t Xdim, size_t Ydim>
-    inline T
-    perceptron<T, Xdim, Ydim>::
-    sigmoid(T in) const noexcept
-    {
-        auto in_d = static_cast<double>(in);
-        auto result = std::exp(in_d) / (std::exp(in_d) + 1);
-
-        return static_cast<T>(result);
-    }
 }
+#include "perceptron.tcc"
 
 #endif
