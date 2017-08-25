@@ -5,7 +5,7 @@ set(SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/main.cpp
     ${PROJECT_SOURCE_DIR}/perceptron.cpp
     # ${PROJECT_SOURCE_DIR}/trainable.cpp
-    ${PROJECT_SOURCE_DIR}/trainder.cpp)
+    ${PROJECT_SOURCE_DIR}/trainer.cpp)
 
 message("[ Source files for ${PROJECT_NAME} ]")
 foreach(SOURCE_FILE ${PROJECT_SOURCE_FILES})
