@@ -74,8 +74,12 @@ namespace tnn
         auto correct = std::get<1>(train_data);
         auto error_vec = vector_dyn<T>(correct - result);
 
-        return std::abs(std::accumulate(error_vec.begin(),
-                                        error_vec.end(), 0.0) / error_vec.size()) * 100.0;
+        auto abs_error_vec = map(error_vec,
+                                 [](T elem){ return std::abs(elem); });
+
+        return std::accumulate(abs_error_vec.begin(),
+                               abs_error_vec.end(), 0.0)
+            / abs_error_vec.size() * 100.0;
     }
 
     template<typename T, size_t InSize>
