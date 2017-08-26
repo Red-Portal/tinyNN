@@ -23,7 +23,7 @@ namespace tnn
     using vector_dyn = blaze::DynamicVector<T>;
 
     template<typename T, size_t InSize>
-    class perceptron : trainable<T, InSize>
+    class perceptron : public trainable<T, InSize>
     {
     private:
         vector<T, InSize> weight;
@@ -31,10 +31,10 @@ namespace tnn
         virtual void
         update_weight(vector<T, InSize> const& correction) final;
 
-        inline T sigmoid(T) const noexcept;
+        inline static T sigmoid(T) noexcept;
 
     public:
-        inline perceptron() = default;
+        inline perceptron();
 
         virtual T
         operator()(vector<T, InSize> const& input_x) const final;

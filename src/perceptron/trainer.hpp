@@ -22,19 +22,26 @@ namespace tnn
     template<typename T, size_t InSize>
     class trainer
     {
-        using column =
-            typename blaze::Column<matrix_dyn<T>>;
     private:
         double _eta;
         uint64_t _max_iterations;
-        std::shared_ptr<trainable<T, InSize>> _trainee;
+        trainable<T, InSize>* _trainee;
         std::vector<T> _error;
         std::mt19937 _random_engine;
         std::uniform_int_distribution<uint32_t> _distr;
         bool _verbose;
 
-        inline vector<T, InSize>
-        pick_data_random(matrix_dyn<T> const& data_set);
+        inline double
+        accuracy_percent(
+            perceptron<T, InSize> const& perceptron,
+            std::tuple<matrix_dyn<T>, vector_dyn<T>> const& train_data) const;
+
+        inline std::tuple<matrix_dyn<T>, vector_dyn<T>>
+        separate_in_out(matrix_dyn<T> const& train_data) const;
+
+        inline std::tuple<vector<T, InSize>, T>
+        pick_data_random(
+            std::tuple<matrix_dyn<T>, vector_dyn<T>> const& data_set);
 
         inline T predict(vector<T, InSize> const& data_set) const;
         
