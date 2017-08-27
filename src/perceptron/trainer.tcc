@@ -85,10 +85,10 @@ namespace tnn
     template<typename T, size_t InSize>
     T
     trainer<T, InSize>::
-    predict(vector<T, InSize> const& data_set) const
+    predict(vector<T, InSize> const& input) const
     {
-        T error = (*_trainee)(data_set);
-        return error;
+        T predicted_result = (*_trainee)(input);
+        return predicted_result;
     }
 
     template<typename T, size_t InSize>
@@ -110,13 +110,13 @@ namespace tnn
 
         for(size_t it = 0; it < _max_iterations; ++it)
         {
-            auto [sel_in, sel_out] = pick_data_random(train_data_seperated);
+            auto [train_input, train_answer] = pick_data_random(train_data_seperated);
 
-            T result = predict(sel_in);
-            T error = sel_out - result;
+            T result = predict(train_in);
+            T error = train_answer - result;
 
             _error.push_back(error);
-            auto correction = _eta * error * sel_in;
+            auto correction = _eta * error * train_input;
             _trainee->update_weight(correction);
 
             if(_verbose)
