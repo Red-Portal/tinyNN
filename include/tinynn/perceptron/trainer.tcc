@@ -14,19 +14,21 @@ namespace tnn
     trainer(double eta,
             uint64_t max_iterations,
             std::function<double(double)> const& activation_fun,
-            bool verbose)
+            bool verbose,
+            bool history)
         :_eta(eta),
          _max_iterations(max_iterations),
          _trainee(nullptr),
-         _error(),
+         _history(),
          _distr(),
          _verbose(verbose),
+         _save_history(history),
          _activation_func(activation_fun)
     {
         std::random_device seed_gen;
         _random_engine.seed(seed_gen());
 
-        _error.reserve(max_iterations);
+        _history.reserve(max_iterations);
     }
 
     
@@ -110,6 +112,31 @@ namespace tnn
     }
 
     template<typename T, size_t InSize>
+    trainer<T, InSize>::history::
+    history(vector<T, InSize>&& input_,
+            vector<T, InSize>&& delta_,
+            T answer_, T output_, T error_)
+        : input(std::move(input_)),
+          delta(std::move(delta_)),
+          answer(answer_),
+          output(output_),
+          error(error_)
+    {}
+
+    template<typename T, size_t InSize>
+    typename trainer<T, InSize>::history
+    trainer<T, InSize>::
+    make_history(vector<T, InSize>&& input, T output, T answer,
+                 vector<T, InSize>&& delta, T error) const
+    {
+        auto container = typename trainer<T, InSize>::history(
+            std::move(input), std::move(delta), answer,
+            output, error);
+
+        return container;
+    }
+
+    template<typename T, size_t InSize>
     perceptron<T, InSize>
     trainer<T, InSize>::
     train(matrix_dyn<T> const& train_data)
@@ -139,13 +166,20 @@ namespace tnn
             T result = predict(train_input);
             T error = train_answer - result;
 
-            _error.push_back(error);
             auto correction = _eta * error * train_input;
             _trainee->update_weight(correction);
 
+            if(_save_history)
+            {
+                _history.push_back(
+                    make_history(std::move(train_input),
+                                 result, train_answer,
+                                 std::move(correction), error));
+            }
+
             if(_verbose)
                 std::cout << " - " << it+1 << "         "
-                          << _error[it] << std::endl;
+                          << error << std::endl;
         }
         
         if(_verbose)

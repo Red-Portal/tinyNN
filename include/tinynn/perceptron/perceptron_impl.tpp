@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <random>
 
-#include "perceptron.hpp"
+#include "perceptron_impl.hpp"
 
 namespace tnn 
 {

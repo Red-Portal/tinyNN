@@ -2,7 +2,6 @@
 #define _TRAINABLE_HPP_
 
 #include <blaze/math/StaticVector.h>
-#include <blaze/math/DynamicVector.h>
 
 namespace tnn
 {

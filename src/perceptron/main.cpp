@@ -8,9 +8,8 @@
 #include <blaze/math/DynamicVector.h>
 #include <blaze/math/DynamicMatrix.h>
 
-#include "activation_functions.hpp"
-#include "perceptron.hpp"
-#include "trainer.hpp"
+#include <tinynn/perceptron.hpp>
+#include <tinynn/activation.hpp>
 
 namespace chrono = std::chrono;
 
@@ -52,7 +51,7 @@ int main()
 
     auto start = std::chrono::steady_clock::now();
     auto _trainer = tnn::trainer<double, 3>(
-        eta, iterations, tnn::activation_function::sigmoid, true);
+        eta, iterations, tnn::activation_function::sigmoid, false);
 
     auto model  = _trainer.train(dyn_matrix);
     auto end = std::chrono::steady_clock::now();
@@ -60,9 +59,10 @@ int main()
     std::cout << "\ntrained perceptron with " << std::endl;
     std::cout << "learning rate of " << eta << std::endl;
     std::cout << iterations << " iterations" << std::endl;
+    std::cout << "sigmoid activation function" << std::endl;
     std::cout << "time elapsed: "
-              << chrono::duration_cast<
-                  chrono::microseconds>(end - start).count()
+              << chrono::duration_cast<chrono::microseconds>(
+                  end - start).count()
               << "us"<< std::endl;
 
 

@@ -24,14 +24,15 @@ message("blaze include: ${blaze_INCLUDE_DIR}" )
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-    ${blaze_INCLUDE_DIR})
+    ${blaze_INCLUDE_DIR}
+    ${tinyNN_INCLUDE_DIR})
 
 ## Thread library dependency
-find_package(Threads REQUIRED)
+# find_package(Threads REQUIRED)
 
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-    ${CMAKE_THREAD_LIBS_INIT})
+# target_link_libraries(${PROJECT_NAME}
+#     PRIVATE
+#     ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS ${PROJECT_NAME}
     DESTINATION ${PROJECT_ROOT_DIR}/bin)

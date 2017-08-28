@@ -1,14 +1,12 @@
-#ifndef _PERCEPTRON_HPP_
-#define _PERCEPTRON_HPP_
+#ifndef _PERCEPTRON_IMPL_HPP_
+#define _PERCEPTRON_IMPL_HPP_
 
 #include <cmath>
 #include <functional>
 
-#include <blaze/math/StaticMatrix.h>
 #include <blaze/math/DynamicMatrix.h>
 #include <blaze/math/StaticVector.h>
 #include <blaze/math/DynamicVector.h>
-#include <blaze/math/blas/gemv.h>
 
 #include "trainable.hpp"
 
@@ -46,6 +44,7 @@ namespace tnn
         operator()(matrix_dyn<T> const& input_x) const final;
     };
 }
-#include "perceptron.tcc"
+
+#include "perceptron_impl.tpp"
 
 #endif
