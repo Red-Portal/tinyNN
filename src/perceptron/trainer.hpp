@@ -19,9 +19,13 @@ namespace tnn
     template<typename T, size_t Xdim, size_t Ydim>
     using matrix = blaze::StaticMatrix<T, Xdim, Ydim>;
 
+
     template<typename T, size_t InSize>
     class trainer
     {
+        using separated_data_set =
+            std::tuple<matrix_dyn<T>, vector_dyn<T>>;
+
     private:
         double _eta;
         uint64_t _max_iterations;
@@ -30,24 +34,29 @@ namespace tnn
         std::mt19937 _random_engine;
         std::uniform_int_distribution<uint32_t> _distr;
         bool _verbose;
+        std::function<double(double)> _activation_func;
+
+        inline void assert_train_data(matrix_dyn<T> const& input);
 
         inline double
         accuracy_percent(
             perceptron<T, InSize> const& perceptron,
-            std::tuple<matrix_dyn<T>, vector_dyn<T>> const& train_data) const;
+            separated_data_set const& train_data) const;
 
-        inline std::tuple<matrix_dyn<T>, vector_dyn<T>>
+        inline separated_data_set
         separate_in_out(matrix_dyn<T> const& train_data) const;
 
         inline std::tuple<vector<T, InSize>, T>
-        pick_data_random(
-            std::tuple<matrix_dyn<T>, vector_dyn<T>> const& data_set);
+        pick_random_data(
+            separated_data_set const& data_set);
 
         inline T predict(vector<T, InSize> const& data_set) const;
         
     public:
-        inline trainer(double eta, uint64_t max_iterations,
-                       bool verbose = true);
+        inline trainer(
+            double eta, uint64_t max_iterations,
+            std::function<double(double)> const& activation_fun,
+            bool verbose = true);
 
         inline perceptron<T, InSize>
         train(matrix_dyn<T> const& train_data);

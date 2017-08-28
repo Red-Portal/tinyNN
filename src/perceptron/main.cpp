@@ -8,58 +8,61 @@
 #include <blaze/math/DynamicVector.h>
 #include <blaze/math/DynamicMatrix.h>
 
+#include "activation_functions.hpp"
 #include "perceptron.hpp"
 #include "trainer.hpp"
 
 namespace chrono = std::chrono;
 
-template<size_t Xdim, size_t Ydim, typename T>
-    blaze::StaticMatrix<T, Xdim, Ydim>
-    random_matrix(T bottom, T top)
+template<typename T>
+inline blaze::DynamicMatrix<T>
+make_train_data()
 {
-    static std::random_device rand_div;
-    static std::mt19937_64 mersenne(rand_div());
-    static std::uniform_real_distribution<T> dist(bottom, top);
+    auto dyn_matrix = blaze::DynamicMatrix<T>(4, 4);
 
-    blaze::StaticMatrix<T, Xdim, Ydim> matrix{}; 
-    for(auto i = 0u; i < Xdim; ++i)
-    {
-        double count = 0;
-        for(auto j = 0u; j < Ydim - 1; ++j)
-        {
-            auto number = dist(mersenne);
-            matrix(i, j) = number;
-            count += number;
-        }
+    dyn_matrix(0, 0) = 0;
+    dyn_matrix(0, 1) = 0;
+    dyn_matrix(0, 2) = 1;
+    dyn_matrix(0, 3) = 0;
 
-        if(count > 1.0)
-            matrix(i, Ydim - 1) = 1;
-        else
-            matrix(i, Ydim - 1) = 0;
-    }
-    return matrix;
+    dyn_matrix(1, 0) = 0;
+    dyn_matrix(1, 1) = 1;
+    dyn_matrix(1, 2) = 1;
+    dyn_matrix(1, 3) = 1;
+
+    dyn_matrix(2, 0) = 1;
+    dyn_matrix(2, 1) = 0;
+    dyn_matrix(2, 2) = 1;
+    dyn_matrix(2, 3) = 1;
+
+    dyn_matrix(3, 0) = 1;
+    dyn_matrix(3, 1) = 1;
+    dyn_matrix(3, 2) = 1;
+    dyn_matrix(3, 3) = 1;
+
+    return dyn_matrix;
 }
 
 int main()
 {
-    auto matrix = random_matrix<100, 3, double>(0.0, 1.0);
-    auto dyn_matrix = blaze::DynamicMatrix<double>(matrix);
+    auto dyn_matrix = make_train_data<double>();
 
     double eta = 0.5;
     auto iterations = 100;
 
     auto start = std::chrono::steady_clock::now();
-    auto _trainer = tnn::trainer<double, 2>(eta, iterations, true);
-    auto model  = _trainer.train(matrix);
-    auto end = std::chrono::steady_clock::now();
+    auto _trainer = tnn::trainer<double, 3>(
+        eta, iterations, tnn::activation_function::sigmoid, true);
 
+    auto model  = _trainer.train(dyn_matrix);
+    auto end = std::chrono::steady_clock::now();
 
     std::cout << "\ntrained perceptron with " << std::endl;
     std::cout << "learning rate of " << eta << std::endl;
     std::cout << iterations << " iterations" << std::endl;
     std::cout << "time elapsed: "
               << chrono::duration_cast<
-        chrono::microseconds>(end - start).count()
+                  chrono::microseconds>(end - start).count()
               << "us"<< std::endl;
 
 
@@ -69,9 +72,10 @@ int main()
     std::vector<std::chrono::duration<long long, std::nano>> bench;
 
     {
-        blaze::StaticVector<double, 2> test;
+        blaze::StaticVector<double, 3> test;
         test[0] = 0;
         test[1] = 0;
+        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);
@@ -83,9 +87,10 @@ int main()
     }
 
     {
-        blaze::StaticVector<double, 2> test;
+        blaze::StaticVector<double, 3> test;
         test[0] = 1;
         test[1] = 0;
+        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);
@@ -97,9 +102,10 @@ int main()
     }
 
     {
-        blaze::StaticVector<double, 2> test;
+        blaze::StaticVector<double, 3> test;
         test[0] = 0;
         test[1] = 1;
+        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);
@@ -111,9 +117,10 @@ int main()
     }
 
     {
-        blaze::StaticVector<double, 2> test;
+        blaze::StaticVector<double, 3> test;
         test[0] = 1;
         test[1] = 1;
+        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);

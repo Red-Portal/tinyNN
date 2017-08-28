@@ -2,6 +2,7 @@
 #define _PERCEPTRON_HPP_
 
 #include <cmath>
+#include <functional>
 
 #include <blaze/math/StaticMatrix.h>
 #include <blaze/math/DynamicMatrix.h>
@@ -26,7 +27,8 @@ namespace tnn
     class perceptron : public trainable<T, InSize>
     {
     private:
-        vector<T, InSize> weight;
+        vector<T, InSize> _weight;
+        std::function<double(double)> _activation_func;
 
         virtual void
         update_weight(vector<T, InSize> const& correction) final;
@@ -34,7 +36,8 @@ namespace tnn
         inline static T sigmoid(T) noexcept;
 
     public:
-        inline perceptron();
+        inline explicit perceptron(
+            std::function<double(double)> const& activation_func);
 
         virtual T
         operator()(vector<T, InSize> const& input_x) const final;
