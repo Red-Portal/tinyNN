@@ -9,8 +9,8 @@
 namespace tnn
 {
     template<typename T, size_t InSize>
-    perceptron_trainer<T, InSize>::
-    perceptron_trainer(
+    multi_layer_trainer<T, InSize>::
+    multi_layer_trainer(
         std::vector<size_t> const& layer_setting,
         double eta,
         uint64_t max_iterations,
@@ -33,8 +33,8 @@ namespace tnn
 
     
     template<typename T, size_t InSize>
-    typename perceptron_trainer<T, InSize>::separated_data_set
-    perceptron_trainer<T, InSize>::
+    typename multi_layer_trainer<T, InSize>::separated_data_set
+    multi_layer_trainer<T, InSize>::
     separate_in_out(matrix_dyn<T> const& train_data) const
     {
         auto separated = std::vector<separated_data_set>();
@@ -59,7 +59,7 @@ namespace tnn
 
     template<typename T, size_t InSize>
     std::tuple<vector<T, InSize>, vector_dyn<T>>
-    perceptron_trainer<T, InSize>::
+    multi_layer_trainer<T, InSize>::
     pick_random_data(std::vector<separated_data_set> const& set) 
     {
         auto idx = _distr(_random_engine);
@@ -68,7 +68,7 @@ namespace tnn
 
     template<typename T, size_t InSize>
     double
-    perceptron_trainer<T, InSize>::
+    multi_layer_trainer<T, InSize>::
     accuracy_percent(
         multi_layer_perceptron<T, InSize> const& perceptron,
         matrix_dyn<T> const& train_data) const
@@ -100,7 +100,7 @@ namespace tnn
 
     template<typename T, size_t InSize>
     vector_dyn<T>
-    perceptron_trainer<T, InSize>::
+    multi_layer_trainer<T, InSize>::
     forward_layer(size_t layer_num,
                   vector<T, InSize> const& input) const
     {
@@ -110,7 +110,7 @@ namespace tnn
 
     template<typename T, size_t InSize>
     void
-    perceptron_trainer<T, InSize>::
+    multi_layer_trainer<T, InSize>::
     assert_train_data(matrix_dyn<T> const& train_data)
     {
         // auto rows = train_data.rows();
@@ -122,7 +122,7 @@ namespace tnn
     }
 
     template<typename T, size_t InSize>
-    perceptron_trainer<T, InSize>::history::
+    multi_layer_trainer<T, InSize>::history::
     history(vector<T, InSize>&& input_,
             vector<T, InSize>&& delta_,
             T answer_, T output_, T error_)
@@ -134,8 +134,8 @@ namespace tnn
     {}
 
     template<typename T, size_t InSize>
-    typename perceptron_trainer<T, InSize>::history
-    perceptron_trainer<T, InSize>::
+    typename multi_layer_trainer<T, InSize>::history
+    multi_layer_trainer<T, InSize>::
     make_history(vector<T, InSize>&& input, T output, T answer,
                  vector<T, InSize>&& delta, T error) const
     {
@@ -149,7 +149,7 @@ namespace tnn
 
     template<typename T, size_t InSize>
     perceptron<T, InSize>
-    perceptron_trainer<T, InSize>::
+    multi_layer_trainer<T, InSize>::
     train(matrix_dyn<T> const& train_data)
     {
         assert_train_data(train_data);

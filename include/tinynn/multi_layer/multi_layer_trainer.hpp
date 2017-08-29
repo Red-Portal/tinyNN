@@ -12,7 +12,7 @@
 namespace tnn
 {
     template<typename T, size_t InSize>
-    class perceptron_trainer
+    class multi_layer_trainer
     {
         using separated_data_set =
             std::tuple<vector<T, InSize>, vector_dyn<T>>;
@@ -65,7 +65,7 @@ namespace tnn
                       vector<T, InSize> const& input) const;
 
     public:
-        inline perceptron_trainer(
+        inline multi_layer_trainer(
             std::vector<size_t> const& layer_setting,
             double eta, uint64_t max_iterations,
             std::function<double(double)> const& activation_fun,
