@@ -8,3 +8,4 @@ set(blaze_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/blaze)
 set(tinyNN_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 
 add_subdirectory(${SOURCE_DIR}/perceptron)
+add_subdirectory(${SOURCE_DIR}/multi_layer_perceptron)

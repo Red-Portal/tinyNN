@@ -1,6 +1,5 @@
 #include "multi_layer_perceptron.hpp"
 
-
 namespace tnn
 {
     template<typename T, size_t InSize>
@@ -56,7 +55,7 @@ namespace tnn
     }
 
     template<typename T, size_t InSize>
-    virtual vector_dyn<T>
+    vector_dyn<T>
     multi_layer_perceptron<T, InSize>::
     operator()(vector<T, InSize> const& x) const
     {
@@ -68,8 +67,8 @@ namespace tnn
     }
 
     template<typename T, size_t InSize>
-    virtual matrix_dyn<T>
-    multi_layer_perceptron<InSize>::
+    matrix_dyn<T>
+    multi_layer_perceptron<T, InSize>::
     operator()(matrix_dyn<T, InSize> const& x) const
     {
         for(auto const& layer : _layers)

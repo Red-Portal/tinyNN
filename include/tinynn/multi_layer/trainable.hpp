@@ -1,7 +1,7 @@
 #ifndef _TRAINABLE_HPP_
 #define _TRAINABLE_HPP_
 
-#include <blaze/math/StaticVector.h>
+#include <blaze/math/DynamicMatrix.h>
 
 namespace tnn
 {
@@ -13,11 +13,13 @@ namespace tnn
     {
     public:
         virtual void
-        update_weight(size_t layer_num, matrix_dyn<T> const& correction) = 0;
+        update_weight(size_t layer_num,
+                      matrix_dyn<T> const& correction) = 0;
 
     public:
         virtual matrix_dyn<T>
-        feed_layer(size_t layer_num, matrix_dyn<T> const& input) const = 0;
+        feed_layer(size_t layer_num,
+                   matrix_dyn<T> const& input) const = 0;
     };
 }
 

@@ -140,7 +140,7 @@ namespace tnn
                  vector<T, InSize>&& delta, T error) const
     {
         auto container =
-            typename perceptron_trainer<T, InSize>::history(
+            typename multi_layer_trainer<T, InSize>::history(
                 std::move(input), std::move(delta),
                 answer, output, error);
 
@@ -148,7 +148,7 @@ namespace tnn
     }
 
     template<typename T, size_t InSize>
-    perceptron<T, InSize>
+    multi_layer_perceptron<T, InSize>
     multi_layer_trainer<T, InSize>::
     train(matrix_dyn<T> const& train_data)
     {

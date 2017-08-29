@@ -1,4 +1,4 @@
-#ifnef _MULTI_LAYER_TRAINER_HPP_
+#ifndef _MULTI_LAYER_TRAINER_HPP_
 #define _MULTI_LAYER_TRAINER_HPP_
 
 #include <vector>
@@ -51,7 +51,7 @@ namespace tnn
         inline double
         accuracy_percent(
             multi_layer_perceptron<T, InSize> const& perceptron,
-            separated_data_set const& train_data) const;
+            matrix_dyn<T> const& train_data) const;
 
         inline separated_data_set
         separate_in_out(matrix_dyn<T> const& train_data) const;

@@ -18,6 +18,9 @@ namespace tnn
     template<typename T, size_t Xdim>
     using vector = blaze::StaticVector<T, Xdim>;
 
+    template<typename T>
+    using vector_dyn = blaze::DynamicVector<T>;
+
     template<typename T, size_t InSize>
     class multi_layer_perceptron
         : public trainable<T, InSize>
@@ -31,7 +34,7 @@ namespace tnn
                       matrix_dyn<T> const& correction) final;
 
         inline std::vector<matrix_dyn>
-        set_layers(std::vector const& layer_setting);
+        set_layers(std::vector<size_t> const& layer_setting);
 
         virtual matrix_dyn<T>
         feed_layer(size_t layer_num,
@@ -46,7 +49,7 @@ namespace tnn
         operator()(vector<T, InSize> const& x) const;
 
         vector_dyn<T>
-        operator()(matrix_dyn<T, InSize> const& x) const;
+        operator()(matrix_dyn<T> const& x) const;
     };
 }
 
