@@ -10,20 +10,20 @@ namespace tnn
 {
     template<typename T, size_t InSize>
     perceptron_trainer<T, InSize>::
-    perceptron_trainer(std::vector<size_t> const& layer_setting,
-                       double eta,
-                       uint64_t max_iterations,
-                       std::function<double(double)> const& activation_fun,
-                       bool verbose,
-                       bool history)
-        :_eta(eta),
-         _max_iterations(max_iterations),
-         _trainee(nullptr),
-         _history(),
-         _distr(),
-         _verbose(verbose),
-         _save_history(history),
-         _activation_func(activation_fun)
+    perceptron_trainer(
+        std::vector<size_t> const& layer_setting,
+        double eta,
+        uint64_t max_iterations,
+        std::function<double(double)> const& activation_fun,
+        bool verbose,
+        bool history) :_eta(eta),
+                       _max_iterations(max_iterations),
+                       _trainee(nullptr),
+                       _history(),
+                       _distr(),
+                       _verbose(verbose),
+                       _save_history(history),
+                       _activation_func(activation_fun)
     {
         std::random_device seed_gen;
         _random_engine.seed(seed_gen());
@@ -37,28 +37,57 @@ namespace tnn
     perceptron_trainer<T, InSize>::
     separate_in_out(matrix_dyn<T> const& train_data) const
     {
+        auto separated = std::vector<separated_data_set>();
+        auto cols = separated.columns();
+        auto rows = separated.rows();
 
+        separated.reserve(rows);
+
+        for(auto i = 0u; i < rows; ++i)
+        {
+            auto in = vector<T, InSize>();
+            auto out = vector_dyn<T>(cols - InSize - 1);
+            for(auto j = 0u; j < InSize + 1; ++j)
+                in[j] = train_data(i, j);
+
+            for(auto j = InSize + 1; j < cols; ++j)
+                out[j - InSize - 1] = train_data(i, j);
+        }
+
+        return separated;
     }
 
     template<typename T, size_t InSize>
     std::tuple<vector<T, InSize>, vector_dyn<T>>
     perceptron_trainer<T, InSize>::
-    pick_random_data(separated_data_set const& set) 
+    pick_random_data(std::vector<separated_data_set> const& set) 
     {
         auto idx = _distr(_random_engine);
-
-
+        return set[idx];
     }
 
     template<typename T, size_t InSize>
     double
     perceptron_trainer<T, InSize>::
-    accuracy_percent(perceptron<T, InSize> const& perceptron,
-                     separated_data_set const& train_data) const
+    accuracy_percent(
+        multi_layer_perceptron<T, InSize> const& perceptron,
+        matrix_dyn<T> const& train_data) const
     {
-        auto result = perceptron(std::get<0>(train_data));
-        auto correct = std::get<1>(train_data);
-        auto error_vec = vector_dyn<T>(correct - result);
+        auto rows = train_data.rows();
+        auto cols = train_data.columns(); 
+        auto input = matrix_dyn<T>(rows, InSize + 1);
+        auto answer = matrix_dyn<T>(rows, cols - InSize - 1);
+
+        for(auto i = 0; i < rows; ++i)
+        {
+            for(auto j = 0; j < InSize + 1; ++j)
+                input(i, j) = train_data(i, j);
+            for(auto j = InSize + 1; j < cols; ++j)
+                answer(i, j) = train_data(i, j);
+        }
+            
+        auto result = perceptron(input);
+        auto error_vec = vector_dyn<T>(correct - answer);
 
         auto abs_error_vec = map(
             error_vec,
@@ -69,14 +98,15 @@ namespace tnn
             / abs_error_vec.size() * 100.0;
     }
 
-    // template<typename T, size_t InSize>
-    // vector_dyn<T>
-    // perceptron_trainer<T, InSize>::
-    // predict(vector<T, InSize> const& input) const
-    // {
-    //     T predicted_result = (*_trainee)(input);
-    //     return predicted_result;
-    // }
+    template<typename T, size_t InSize>
+    vector_dyn<T>
+    perceptron_trainer<T, InSize>::
+    forward_layer(size_t layer_num,
+                  vector<T, InSize> const& input) const
+    {
+        auto predicted_result = (*_trainee)(layer_num, input);
+        return predicted_result;
+    }
 
     template<typename T, size_t InSize>
     void
@@ -109,9 +139,10 @@ namespace tnn
     make_history(vector<T, InSize>&& input, T output, T answer,
                  vector<T, InSize>&& delta, T error) const
     {
-        auto container = typename perceptron_trainer<T, InSize>::history(
-            std::move(input), std::move(delta), answer,
-            output, error);
+        auto container =
+            typename perceptron_trainer<T, InSize>::history(
+                std::move(input), std::move(delta),
+                answer, output, error);
 
         return container;
     }
@@ -130,7 +161,7 @@ namespace tnn
             param_type(0, train_data.rows() - 1));
 
         auto _perceptron
-            = std::make_unique<perceptron<T, InSize>>(
+            = std::make_unique<multi_layer_perceptron<T, InSize>>(
                 _activation_func);
 
         _trainee = _perceptron.get();
@@ -143,23 +174,23 @@ namespace tnn
             auto [train_input, train_answer]
                 = pick_random_data(train_data_separated);
 
-            T result = predict(train_input);
-            T error = train_answer - result;
+            // T result = predict(train_input);
+            // T error = train_answer - result;
 
-            auto correction = _eta * error * train_input;
-            _trainee->update_weight(correction);
+            // auto correction = _eta * error * train_input;
+            // _trainee->update_weight(correction);
 
-            if(_save_history)
-            {
-                _history.push_back(
-                    make_history(std::move(train_input),
-                                 result, train_answer,
-                                 std::move(correction), error));
-            }
+            // if(_save_history)
+            // {
+            //     _history.push_back(
+            //         make_history(std::move(train_input),
+            //                      result, train_answer,
+            //                      std::move(correction), error));
+            // }
 
-            if(_verbose)
-                std::cout << " - " << it+1 << "         "
-                          << error << std::endl;
+            // if(_verbose)
+            //     std::cout << " - " << it+1 << "         "
+            //               << error << std::endl;
         }
         
         if(_verbose)

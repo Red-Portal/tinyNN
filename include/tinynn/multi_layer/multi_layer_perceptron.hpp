@@ -34,11 +34,13 @@ namespace tnn
         set_layers(std::vector const& layer_setting);
 
         virtual matrix_dyn<T>
-        feed_layer(size_t layer_num, matrix_dyn<T> const& input) const final;
+        feed_layer(size_t layer_num,
+                   matrix_dyn<T> const& input) const final;
 
     public:
-        inline multi_layer_perceptron(std::function<double(double)> const& activation_func,
-                                      std::vector<size_t> const& layer_setting);
+        inline multi_layer_perceptron(
+            std::function<double(double)> const& activation_func,
+            std::vector<size_t> const& layer_setting);
 
         T
         operator()(vector<T, InSize> const& x) const;

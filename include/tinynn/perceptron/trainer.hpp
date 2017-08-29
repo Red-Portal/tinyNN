@@ -21,7 +21,7 @@ namespace tnn
     using vector = blaze::StaticVector<T, Size>;
 
     template<typename T, size_t InSize>
-    class trainer
+    class perceptron_trainer
     {
         using separated_data_set =
             std::tuple<matrix_dyn<T>, vector_dyn<T>>;
@@ -73,7 +73,7 @@ namespace tnn
         predict(vector<T, InSize> const& data_set) const;
         
     public:
-        inline trainer(
+        inline perceptron_trainer(
             double eta, uint64_t max_iterations,
             std::function<double(double)> const& activation_fun,
             bool verbose = true,

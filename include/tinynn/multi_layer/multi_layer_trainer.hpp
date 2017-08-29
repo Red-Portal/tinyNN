@@ -11,20 +11,17 @@
 
 namespace tnn
 {
-
-    
     template<typename T, size_t InSize>
     class perceptron_trainer
     {
         using separated_data_set =
-            std::tuple<matrix_dyn<T>, matrix_dyn<T>>;
+            std::tuple<vector<T, InSize>, vector_dyn<T>>;
     public:
         struct history
         {
             inline history(vector<T, InSize>&& input_,
                            vector<T, InSize>&& delta_,
                            T answer_, T output_, T error_);
-
             vector<T, InSize> input;
             vector<T, InSize> delta;
             T answer;
@@ -61,11 +58,12 @@ namespace tnn
 
         inline std::tuple<vector<T, InSize>, vector_dyn<T>>
         pick_random_data(
-            separated_data_set const& data_set);
+            std::vector<separated_data_set> const& data_set);
 
-        // inline T
-        // predict(vector<T, InSize> const& data_set) const;
-        
+        inline vector_dyn<T>
+        forward_layer(size_t layer_num,
+                      vector<T, InSize> const& input) const;
+
     public:
         inline perceptron_trainer(
             std::vector<size_t> const& layer_setting,

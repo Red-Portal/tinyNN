@@ -46,12 +46,12 @@ int main()
 {
     auto dyn_matrix = make_train_data<double>();
 
-    double eta = 0.5;
+    double eta = 2;
     auto iterations = 100;
 
     auto start = std::chrono::steady_clock::now();
-    auto _trainer = tnn::trainer<double, 3>(
-        eta, iterations, tnn::activation_function::sigmoid, false);
+    auto _trainer = tnn::perceptron_trainer<double, 3>(
+        eta, iterations, tnn::activation_function::sigmoid, true);
 
     auto model  = _trainer.train(dyn_matrix);
     auto end = std::chrono::steady_clock::now();
