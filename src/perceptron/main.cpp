@@ -14,7 +14,7 @@
 namespace chrono = std::chrono;
 
 template<typename T>
-inline blaze::DynamicMatrix<T>
+blaze::DynamicMatrix<T>
 make_train_data()
 {
     auto dyn_matrix = blaze::DynamicMatrix<T>(4, 4);
@@ -50,10 +50,10 @@ int main()
     auto iterations = 100;
 
     auto start = std::chrono::steady_clock::now();
-    auto _trainer = tnn::perceptron_trainer<double, 3>(
+    auto trainer = tnn::perceptron_trainer<double, 3>(
         eta, iterations, tnn::activation_function::sigmoid, true);
 
-    auto model  = _trainer.train(dyn_matrix);
+    auto model  = trainer.train(dyn_matrix);
     auto end = std::chrono::steady_clock::now();
 
     std::cout << "\ntrained perceptron with " << std::endl;
