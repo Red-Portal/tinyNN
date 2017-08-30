@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cassert>
 
+#include "../activation.hpp"
 #include "multi_layer_trainer.hpp"
 #include "trainable.hpp"
 
@@ -15,6 +16,7 @@ namespace tnn
         double eta,
         uint64_t max_iterations,
         std::function<double(double)> const& activation_fun,
+        std::function<double(double)> const& activation_fun_derived,
         bool verbose,
         bool history) :_eta(eta),
                        _max_iterations(max_iterations),
@@ -23,7 +25,9 @@ namespace tnn
                        _distr(),
                        _verbose(verbose),
                        _save_history(history),
-                       _activation_func(activation_fun)
+                       _activation_func(activation_fun),
+                       _activation_func_derived(activation_fun_derived),
+                       _layer_setting(layer_setting)
     {
         std::random_device seed_gen;
         _random_engine.seed(seed_gen());
@@ -80,14 +84,14 @@ namespace tnn
 
         for(auto i = 0; i < rows; ++i)
         {
-            for(auto j = 0; j < InSize + 1; ++j)
+            for(auto j = 0; j < InSize; ++j)
                 input(i, j) = train_data(i, j);
-            for(auto j = InSize + 1; j < cols; ++j)
+            for(auto j = InSize; j < cols; ++j)
                 answer(i, j) = train_data(i, j);
         }
             
         auto result = perceptron(input);
-        auto error_vec = vector_dyn<T>(correct - answer);
+        auto error_vec = vector_dyn<T>(answer- answer);
 
         auto abs_error_vec = map(
             error_vec,
@@ -124,28 +128,90 @@ namespace tnn
     template<typename T, size_t InSize>
     multi_layer_trainer<T, InSize>::history::
     history(vector<T, InSize>&& input_,
-            vector<T, InSize>&& delta_,
-            T answer_, T output_, T error_)
+            vector_dyn<T>&& answer_,
+            vector_dyn<T>&& output_,
+            T error_)
         : input(std::move(input_)),
-          delta(std::move(delta_)),
-          answer(answer_),
-          output(output_),
+          answer(std::move(answer_)),
+          output(std::move(output_)),
           error(error_)
     {}
 
     template<typename T, size_t InSize>
     typename multi_layer_trainer<T, InSize>::history
     multi_layer_trainer<T, InSize>::
-    make_history(vector<T, InSize>&& input, T output, T answer,
-                 vector<T, InSize>&& delta, T error) const
+    make_history(vector<T, InSize>&& input,
+                 vector_dyn<T>&& output,
+                 vector_dyn<T>&& answer,
+                  T error) const
     {
         auto container =
             typename multi_layer_trainer<T, InSize>::history(
-                std::move(input), std::move(delta),
-                answer, output, error);
+                std::move(input), std::move(answer),
+                std::move(output), error);
 
         return container;
     }
+
+    template<typename T, size_t InSize>
+    std::vector<vector_dyn<T>>
+    multi_layer_trainer<T, InSize>::
+    forward_propagate(vector<T, InSize> const& train_data) const
+    {
+        auto result_by_layer = std::vector<vector<T, InSize>>();
+        auto layer_num = _layer_setting.size();
+        result_by_layer.reserve(layer_num);
+
+
+        result_by_layer.push_back(
+            _trainee->feed_layer(0, train_data));
+
+        for(auto i = 1u; i < layer_num; ++i)
+        {
+            result_by_layer.push_back(
+                _trainee->feed_layer(i, result_by_layer[i - 1]));
+        }
+
+        return result_by_layer;
+    }
+
+
+
+    template<typename T, size_t InSize>
+    void
+    multi_layer_trainer<T, InSize>::
+    backward_propagate(
+        std::vector<vector_dyn<T>> const& output_per_layer,
+        vector_dyn<T> const& answer) 
+    {
+        auto output = output_per_layer.back();
+        auto delta =
+            (answer - output) * map(output,
+                                    _activation_func_derived);
+
+        auto layer_num = output.size();
+        auto correction = eta * delta * map(output, _activation_func);
+        _trainee->update_weight(layer_num - 1, correction);
+        for(auto i = layer_num - 1; i >= 0u; ++i)
+        {
+            auto Fds = map(output_per_layer[i],
+                           _activation_func_derived);
+            delta = Fds * _trainee->feed_forward(delta);
+            correction = eta * delta;
+            _trainee->update_weight(layer_num - 1, correction);
+        }
+    }
+    
+    template<typename T, size_t InSize>
+    double
+    multi_layer_trainer<T, InSize>::
+    calculate_error(vector_dyn<T> const& error_vector) const
+    {
+        return std::accumulate(
+            error_vector.begin(),
+            error_vector.end(), 0.0) / error_vector.size();
+    }
+
 
     template<typename T, size_t InSize>
     multi_layer_perceptron<T, InSize>
@@ -162,6 +228,7 @@ namespace tnn
 
         auto _perceptron
             = std::make_unique<multi_layer_perceptron<T, InSize>>(
+                _layer_setting,
                 _activation_func);
 
         _trainee = _perceptron.get();
@@ -174,23 +241,22 @@ namespace tnn
             auto [train_input, train_answer]
                 = pick_random_data(train_data_separated);
 
-            // T result = predict(train_input);
-            // T error = train_answer - result;
+            auto result_by_layer = forward_propagate(train_input);
+            auto error = train_answer - result_by_layer.back();
+            auto avg_error = calculate_error(error);
+            backward_propagate(result_by_layer, train_answer);
+            
+            if(_save_history)
+            {
+                _history.push_back(
+                    make_history(std::move(train_input),
+                                 std::move(result_by_layer.back()),
+                                 std::move(train_answer), avg_error));
+            }
 
-            // auto correction = _eta * error * train_input;
-            // _trainee->update_weight(correction);
-
-            // if(_save_history)
-            // {
-            //     _history.push_back(
-            //         make_history(std::move(train_input),
-            //                      result, train_answer,
-            //                      std::move(correction), error));
-            // }
-
-            // if(_verbose)
-            //     std::cout << " - " << it+1 << "         "
-            //               << error << std::endl;
+            if(_verbose)
+                std::cout << " - " << it+1 << "         "
+                          << avg_error << std::endl;
         }
         
         if(_verbose)

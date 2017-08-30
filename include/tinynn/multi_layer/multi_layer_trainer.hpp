@@ -20,12 +20,12 @@ namespace tnn
         struct history
         {
             inline history(vector<T, InSize>&& input_,
-                           vector<T, InSize>&& delta_,
-                           T answer_, T output_, T error_);
+                           vector_dyn<T>&& answer_,
+                           vector_dyn<T>&& output_,
+                           T error_);
             vector<T, InSize> input;
-            vector<T, InSize> delta;
-            T answer;
-            T output;
+            vector_dyn<T> answer;
+            vector_dyn<T> output;
             T error;
         };
 
@@ -39,11 +39,25 @@ namespace tnn
         bool _verbose;
         bool _save_history;
         std::function<double(double)> _activation_func;
+        std::function<double(double)> _activation_func_derived;
         std::vector<size_t> _layer_setting;
 
+        inline std::vector<vector_dyn<T>>
+        forward_propagate(vector<T, InSize> const& input) const;
+
+        inline void
+        backward_propagate(
+            std::vector<vector_dyn<T>> const& output_per_layer,
+            vector_dyn<T> const& answer);
+
+        inline double
+        calculate_error(vector_dyn<T> const& error) const;
+
         inline history
-        make_history(vector<T, InSize>&& input, T output, T answer,
-                     vector<T, InSize>&& delta, T error) const;
+        make_history(vector<T, InSize>&& input,
+                     vector_dyn<T>&& output,
+                     vector_dyn<T>&& answer,
+                     T error) const;
 
         inline void
         assert_train_data(matrix_dyn<T> const& input);
@@ -69,6 +83,7 @@ namespace tnn
             std::vector<size_t> const& layer_setting,
             double eta, uint64_t max_iterations,
             std::function<double(double)> const& activation_fun,
+            std::function<double(double)> const& activation_derived,
             bool verbose = true,
             bool history = false);
 

@@ -7,7 +7,7 @@ namespace tnn
     multi_layer_perceptron(std::function<double(double)> const& activation_func,
                            std::vector<size_t> const& layer_setting)
         : _layers(set_layers(layer_setting)),
-          _activation_func(activation_func)
+          _activation_fun(activation_func)
     {
         auto reg_distr = std::uniform_real_distribution<double>(0, 1);
         auto seed_gen = std::random_device();
@@ -28,20 +28,20 @@ namespace tnn
     multi_layer_perceptron<T, InSize>::
     update_weight(size_t layer_num, matrix_dyn<T> const& correction)
     {
-        _layers[layer_num] += correction
+        _layers[layer_num] += correction;
     }
 
     template<typename T, size_t InSize>
     std::vector<matrix_dyn<T>>
     multi_layer_perceptron<T, InSize>::
-    set_layers(std::vector<size_t> const& layer_setting) const
+    set_layers(std::vector<size_t> const& layer_setting)
     {
-        std::vector<marix_dyn> layers;
+        std::vector<matrix_dyn<T>> layers;
         layers.reserve(layer_setting.size());
 
         size_t previous_size = InSize;
         for(size_t i : layer_setting)
-            layers.push_back(matrix_dyn(previous_size, i));
+            layers.push_back(matrix_dyn<T>(previous_size, i));
 
         return layers;
     }
@@ -52,6 +52,15 @@ namespace tnn
     feed_layer(size_t layer_num, matrix_dyn<T> const& input) const
     {
         return input * _layers[layer_num];
+    }
+
+    template<typename T, size_t InSize>
+    matrix_dyn<T>
+    multi_layer_perceptron<T, InSize>::
+    fast_back_propagation(size_t layer_num,
+                          matrix_dyn<T> const& delta) const 
+    {
+        return delta * trans(_layer[layer_num]);
     }
 
     template<typename T, size_t InSize>
@@ -69,7 +78,7 @@ namespace tnn
     template<typename T, size_t InSize>
     matrix_dyn<T>
     multi_layer_perceptron<T, InSize>::
-    operator()(matrix_dyn<T, InSize> const& x) const
+    operator()(matrix_dyn<T> const& x) const
     {
         for(auto const& layer : _layers)
             x = x * _layers;
