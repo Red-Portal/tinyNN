@@ -62,21 +62,21 @@ namespace tnn
         inline void
         assert_train_data(matrix_dyn<T> const& input);
 
+        inline matrix_dyn<T>
+        vector_to_matrix(
+            vector_dyn<T, blaze::rowVector> const& vec) const;
+
         inline double
         accuracy_percent(
             multi_layer_perceptron<T, InSize> const& perceptron,
             matrix_dyn<T> const& train_data) const;
 
-        inline separated_data_set
+        inline std::vector<separated_data_set>
         separate_in_out(matrix_dyn<T> const& train_data) const;
 
         inline std::tuple<vector<T, InSize>, vector_dyn<T>>
         pick_random_data(
             std::vector<separated_data_set> const& data_set);
-
-        inline vector_dyn<T>
-        forward_layer(size_t layer_num,
-                      vector<T, InSize> const& input) const;
 
     public:
         inline multi_layer_trainer(

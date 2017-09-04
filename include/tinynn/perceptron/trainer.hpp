@@ -84,6 +84,6 @@ namespace tnn
 
     };
 }
-#include "trainer.tcc"
+#include "trainer.tpp"
 
 #endif

@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cassert>
 
+#include <blaze/math/Submatrix.h>
+
 #include "../activation.hpp"
 #include "multi_layer_trainer.hpp"
 #include "trainable.hpp"
@@ -37,25 +39,27 @@ namespace tnn
 
     
     template<typename T, size_t InSize>
-    typename multi_layer_trainer<T, InSize>::separated_data_set
+    std::vector<
+        typename multi_layer_trainer<T, InSize>::separated_data_set>
     multi_layer_trainer<T, InSize>::
     separate_in_out(matrix_dyn<T> const& train_data) const
     {
         auto separated = std::vector<separated_data_set>();
-        auto cols = separated.columns();
-        auto rows = separated.rows();
+        auto cols = train_data.columns();
+        auto rows = train_data.rows();
 
         separated.reserve(rows);
-
         for(auto i = 0u; i < rows; ++i)
         {
             auto in = vector<T, InSize>();
-            auto out = vector_dyn<T>(cols - InSize - 1);
-            for(auto j = 0u; j < InSize + 1; ++j)
-                in[j] = train_data(i, j);
+            auto out = vector_dyn<T>(cols - InSize);
 
-            for(auto j = InSize + 1; j < cols; ++j)
-                out[j - InSize - 1] = train_data(i, j);
+            for(auto j = 0u; j < InSize; ++j)
+                in[j] = train_data(i, j);
+            for(auto j = InSize; j < cols; ++j)
+                out[j - InSize] = train_data(i, j);
+
+            separated.emplace_back(in, out);
         }
 
         return separated;
@@ -79,37 +83,31 @@ namespace tnn
     {
         auto rows = train_data.rows();
         auto cols = train_data.columns(); 
-        auto input = matrix_dyn<T>(rows, InSize + 1);
-        auto answer = matrix_dyn<T>(rows, cols - InSize - 1);
 
-        for(auto i = 0; i < rows; ++i)
+        auto result =
+            perceptron(
+                matrix_dyn<T>(
+                    submatrix(train_data, 0, 0, cols, InSize)));
+
+        auto answer = 
+            blaze::Submatrix<matrix_dyn<T> const>(
+                train_data, 0, InSize, rows, cols - InSize);
+
+        auto error = map(answer - result,
+                         [](T elem){ return std::abs(elem); });
+
+        auto total = double(0.0);
+        auto error_rows = error.rows();
+        auto error_cols = error.columns();
+        for(auto i = 0u; i < error_rows; ++i)
         {
-            for(auto j = 0; j < InSize; ++j)
-                input(i, j) = train_data(i, j);
-            for(auto j = InSize; j < cols; ++j)
-                answer(i, j) = train_data(i, j);
+            for(auto j = 0u; j < error_cols; ++j)
+            {
+                total += error(i, j);
+            }
         }
-            
-        auto result = perceptron(input);
-        auto error_vec = vector_dyn<T>(answer- answer);
 
-        auto abs_error_vec = map(
-            error_vec,
-            [](T elem){ return std::abs(elem); });
-
-        return std::accumulate(abs_error_vec.begin(),
-                               abs_error_vec.end(), 0.0)
-            / abs_error_vec.size() * 100.0;
-    }
-
-    template<typename T, size_t InSize>
-    vector_dyn<T>
-    multi_layer_trainer<T, InSize>::
-    forward_layer(size_t layer_num,
-                  vector<T, InSize> const& input) const
-    {
-        auto predicted_result = (*_trainee)(layer_num, input);
-        return predicted_result;
+        return total * 100 / (error_rows * error_cols) ;
     }
 
     template<typename T, size_t InSize>
@@ -117,6 +115,7 @@ namespace tnn
     multi_layer_trainer<T, InSize>::
     assert_train_data(matrix_dyn<T> const& train_data)
     {
+        (void)train_data;
         // auto rows = train_data.rows();
         // auto cols = train_data.columns();
         // (void)rows;
@@ -143,7 +142,7 @@ namespace tnn
     make_history(vector<T, InSize>&& input,
                  vector_dyn<T>&& output,
                  vector_dyn<T>&& answer,
-                  T error) const
+                 T error) const
     {
         auto container =
             typename multi_layer_trainer<T, InSize>::history(
@@ -158,13 +157,12 @@ namespace tnn
     multi_layer_trainer<T, InSize>::
     forward_propagate(vector<T, InSize> const& train_data) const
     {
-        auto result_by_layer = std::vector<vector<T, InSize>>();
+        auto result_by_layer = std::vector<vector_dyn<T>>();
         auto layer_num = _layer_setting.size();
         result_by_layer.reserve(layer_num);
 
-
         result_by_layer.push_back(
-            _trainee->feed_layer(0, train_data));
+            _trainee->feed_layer(0, vector_dyn<T>(train_data)));
 
         for(auto i = 1u; i < layer_num; ++i)
         {
@@ -184,21 +182,26 @@ namespace tnn
         std::vector<vector_dyn<T>> const& output_per_layer,
         vector_dyn<T> const& answer) 
     {
-        auto output = output_per_layer.back();
-        auto delta =
-            (answer - output) * map(output,
-                                    _activation_func_derived);
+        auto s = output_per_layer.back();
+        auto y = map(s, _activation_func);
+        auto delta = vector_dyn<T>(
+            (answer - y) * map(s, _activation_func_derived));
 
-        auto layer_num = output.size();
-        auto correction = eta * delta * map(output, _activation_func);
+        auto layer_num = output_per_layer.size();
+
+        auto correction = _eta * delta * y;
         _trainee->update_weight(layer_num - 1, correction);
-        for(auto i = layer_num - 1; i >= 0u; ++i)
+
+        for(auto i = 0u; i < layer_num - 1; ++i)
         {
-            auto Fds = map(output_per_layer[i],
+            size_t idx = layer_num - i - 2;
+
+            auto Fds = map(output_per_layer[idx],
                            _activation_func_derived);
-            delta = Fds * _trainee->feed_forward(delta);
-            correction = eta * delta;
-            _trainee->update_weight(layer_num - 1, correction);
+            delta = Fds * _trainee->eval_weight_delta(idx+ 1, delta);
+            auto y = map(output_per_layer[idx], _activation_func);
+            auto correction = _eta * delta * y;
+            _trainee->update_weight(idx, correction);
         }
     }
     
@@ -210,6 +213,21 @@ namespace tnn
         return std::accumulate(
             error_vector.begin(),
             error_vector.end(), 0.0) / error_vector.size();
+    }
+
+    template<typename T, size_t InSize>
+    matrix_dyn<T>
+    multi_layer_trainer<T, InSize>::
+    vector_to_matrix(
+        vector_dyn<T, blaze::rowVector> const& vec) const
+    {
+        auto size = vec.size();
+        auto mat = matrix_dyn<T>(1, size);
+
+        for(auto i = 0u; i < size; ++i)
+            mat(0, i) = vec[i];
+
+        return mat;
     }
 
 
@@ -228,8 +246,8 @@ namespace tnn
 
         auto _perceptron
             = std::make_unique<multi_layer_perceptron<T, InSize>>(
-                _layer_setting,
-                _activation_func);
+                _activation_func,
+                _layer_setting);
 
         _trainee = _perceptron.get();
 
@@ -242,16 +260,18 @@ namespace tnn
                 = pick_random_data(train_data_separated);
 
             auto result_by_layer = forward_propagate(train_input);
-            auto error = train_answer - result_by_layer.back();
+            auto error =
+                blaze::eval(train_answer - result_by_layer.back());
             auto avg_error = calculate_error(error);
             backward_propagate(result_by_layer, train_answer);
             
             if(_save_history)
             {
                 _history.push_back(
-                    make_history(std::move(train_input),
-                                 std::move(result_by_layer.back()),
-                                 std::move(train_answer), avg_error));
+                    make_history(
+                        std::move(train_input),
+                        std::move(result_by_layer.back()),
+                        std::move(train_answer), avg_error));
             }
 
             if(_verbose)
@@ -263,7 +283,7 @@ namespace tnn
             std::cout << "train over\n"
                       << "average error: "
                       << accuracy_percent(*_perceptron,
-                                          train_data_separated)
+                                          train_data)
                       << "%" << std::endl;
 
         return *_perceptron;

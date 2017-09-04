@@ -4,7 +4,6 @@
 #include <vector>
 #include <functional>
 
-#include <blaze/math/DynamicMatrix.h>
 #include <blaze/math/StaticVector.h>
 #include <blaze/math/DynamicVector.h>
 
@@ -18,9 +17,6 @@ namespace tnn
     template<typename T, size_t Xdim>
     using vector = blaze::StaticVector<T, Xdim>;
 
-    template<typename T>
-    using vector_dyn = blaze::DynamicVector<T>;
-
     template<typename T, size_t InSize>
     class multi_layer_perceptron
         : public trainable<T, InSize>
@@ -29,16 +25,20 @@ namespace tnn
         std::vector<matrix_dyn<T>> _layers;
         std::function<double(double)> _activation_fun;
 
+        virtual vector_dyn<T> 
+        eval_weight_delta(size_t layer_num,
+                          vector_dyn<T> const& delta_o) const final;
+
         virtual void
         update_weight(size_t layer_num,
-                      matrix_dyn<T> const& correction) final;
+                      vector_dyn<T> const& delta) final;
 
         inline std::vector<matrix_dyn<T>>
         set_layers(std::vector<size_t> const& layer_setting);
 
-        virtual matrix_dyn<T>
+        virtual vector_dyn<T>
         feed_layer(size_t layer_num,
-                   matrix_dyn<T> const& input) const final;
+                   vector_dyn<T> const& input) const final;
 
         virtual matrix_dyn<T>
         fast_back_propagation(size_t layer_num,
