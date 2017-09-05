@@ -39,16 +39,16 @@ int main()
 {
     namespace activ_f = tnn::activation_function;
 
-    auto layer_setting = std::vector<size_t>({3, 3, 1});
+    auto layer_setting = std::vector<size_t>({2, 1});
     auto dyn_matrix = make_train_data<double>();
 
-    double eta = 2;
-    auto iterations = 100;
+    double eta = 1;
+    auto iterations = 1000000;
 
     auto start = std::chrono::steady_clock::now();
     auto trainer = tnn::multi_layer_trainer<double, 3>(
         layer_setting, eta, iterations, activ_f::sigmoid,
-        activ_f::derived<activ_f::sigmoid>, true);
+        activ_f::derived<activ_f::sigmoid>, false);
 
     auto model  = trainer.train(dyn_matrix);
     auto end = std::chrono::steady_clock::now();
@@ -59,10 +59,8 @@ int main()
     std::cout << "sigmoid activation function" << std::endl;
     std::cout << "time elapsed: "
               << std::chrono::duration_cast<
-                  std::chrono::microseconds>(
-                      end - start).count()
+                  std::chrono::microseconds>(end - start).count()
               << "us"<< std::endl;
-
 
     std::cout << "\n in1 in2  out" << std::endl;
     std::cout << "--------------" << std::endl;

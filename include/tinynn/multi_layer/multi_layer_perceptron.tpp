@@ -30,23 +30,13 @@ namespace tnn
     template<typename T, size_t InSize>
     void
     multi_layer_perceptron<T, InSize>::
-    update_weight(size_t layer_num, vector_dyn<T> const& delta)
+    update_weight(size_t layer_num,
+                  matrix_dyn<T> const& correction)
     {
-        auto& layer = _layers[layer_num];
-        auto cols = layer.columns();
-        auto rows = layer.rows();
+        // std::cout << "layer: " << std::endl << _layers[layer_num] <<std::endl;
 
-        auto correction = matrix_dyn<T>(rows, cols);
-
-        for(auto i = 0u; i < cols; ++i)
-        {
-            for(auto j = 0u; j < rows; ++j)
-                correction = layer(j, i) * delta[i];
-        }
-
-        layer += correction;
-        std::cout << "correction for: " << layer_num << std::endl;
-        std::cout << correction;
+        // std::cout << "correction" << std::endl << correction <<std::endl;
+        _layers[layer_num] += correction;
     }
 
     template<typename T, size_t InSize>

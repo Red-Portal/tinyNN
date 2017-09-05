@@ -22,7 +22,7 @@ namespace tnn
 
         virtual void
         update_weight(size_t layer_num,
-                      vector_dyn<T> const& delta) = 0;
+                      matrix_dyn<T> const& delta) = 0;
 
         virtual vector_dyn<T>
         feed_layer(size_t layer_num,

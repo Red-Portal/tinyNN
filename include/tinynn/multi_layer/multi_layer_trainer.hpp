@@ -50,6 +50,10 @@ namespace tnn
             std::vector<vector_dyn<T>> const& output_per_layer,
             vector_dyn<T> const& answer);
 
+        inline matrix_dyn<T>
+        compute_correction(vector_dyn<T> const& y,
+                           vector_dyn<T> const& delta) const;
+
         inline double
         calculate_error(vector_dyn<T> const& error) const;
 

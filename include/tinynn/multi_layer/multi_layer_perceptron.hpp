@@ -31,7 +31,7 @@ namespace tnn
 
         virtual void
         update_weight(size_t layer_num,
-                      vector_dyn<T> const& delta) final;
+                      matrix_dyn<T> const& delta) final;
 
         inline std::vector<matrix_dyn<T>>
         set_layers(std::vector<size_t> const& layer_setting);

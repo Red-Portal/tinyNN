@@ -159,21 +159,37 @@ namespace tnn
     {
         auto result_by_layer = std::vector<vector_dyn<T>>();
         auto layer_num = _layer_setting.size();
-        result_by_layer.reserve(layer_num);
+        result_by_layer.reserve(layer_num + 1);
 
-        result_by_layer.push_back(
-            _trainee->feed_layer(0, vector_dyn<T>(train_data)));
+        result_by_layer.push_back(vector_dyn<T>(train_data));
 
-        for(auto i = 1u; i < layer_num; ++i)
+        for(auto i = 1u; i < layer_num + 1; ++i)
         {
             result_by_layer.push_back(
-                _trainee->feed_layer(i, result_by_layer[i - 1]));
+                _trainee->feed_layer(i - 1, result_by_layer[i - 1]));
         }
 
         return result_by_layer;
     }
 
+    template<typename T, size_t InSize>
+    matrix_dyn<T>
+    multi_layer_trainer<T, InSize>::
+    compute_correction(vector_dyn<T> const& y,
+                       vector_dyn<T> const& delta) const
+    {
+        auto rows = y.size(); 
+        auto cols = delta.size(); 
+        auto correction = matrix_dyn<T>(y.size(), delta.size());
 
+        for(auto i = 0u; i < rows; ++i)
+        {
+            for(auto j = 0u; j < cols; ++j)
+                correction(i, j) = y[i] * delta[j];
+        }
+
+        return _eta * correction;
+    }
 
     template<typename T, size_t InSize>
     void
@@ -182,26 +198,55 @@ namespace tnn
         std::vector<vector_dyn<T>> const& output_per_layer,
         vector_dyn<T> const& answer) 
     {
-        auto s = output_per_layer.back();
-        auto y = map(s, _activation_func);
-        auto delta = vector_dyn<T>(
-            (answer - y) * map(s, _activation_func_derived));
+        auto y = output_per_layer;
+        auto Fds = std::vector<vector_dyn<T>>(y.size() - 1);
 
-        auto layer_num = output_per_layer.size();
+        std::transform(
+            std::next(y.begin()), y.end(), Fds.begin(),
+            [this](auto& mat){
+                return map(mat, this->_activation_func_derived);
+            });
 
-        auto correction = _eta * delta * y;
-        _trainee->update_weight(layer_num - 1, correction);
+        std::transform(
+            std::next(y.begin()), y.end(), std::next(y.begin()),
+            [this](auto& mat){
+                return map(mat, this->_activation_func);
+            });
+
+        // std::cout << "y" <<std::endl;
+        // for(auto& i : y)
+        // {
+        //     std::cout << i << std::endl;
+        // }
+
+        // std::cout << "Fds" <<std::endl;
+        // for(auto& i : Fds)
+        // {
+        //     std::cout << i << std::endl;
+        // }
+
+        auto delta = vector_dyn<T>((answer - y.back()) * Fds.back());
+
+        //std::cout << "delta last: " << std::endl << delta << std::endl;
+
+        auto layer_num = _layer_setting.size();
+
+        _trainee->update_weight(
+            layer_num - 1,
+            compute_correction(y[y.size() - 2], delta));
 
         for(auto i = 0u; i < layer_num - 1; ++i)
         {
-            size_t idx = layer_num - i - 2;
+            size_t hidden_idx = layer_num - i - 2;
+            size_t output_idx = layer_num - i - 1;
 
-            auto Fds = map(output_per_layer[idx],
-                           _activation_func_derived);
-            delta = Fds * _trainee->eval_weight_delta(idx+ 1, delta);
-            auto y = map(output_per_layer[idx], _activation_func);
-            auto correction = _eta * delta * y;
-            _trainee->update_weight(idx, correction);
+            delta = Fds[hidden_idx] *
+                _trainee->eval_weight_delta(output_idx, delta);
+            //std::cout << "delta first: " << std::endl << delta << std::endl;
+
+            _trainee->update_weight(
+                hidden_idx,
+                compute_correction(y[hidden_idx], delta));
         }
     }
     
