@@ -28,10 +28,10 @@ namespace tnn
         feed_layer(size_t layer_num,
                    vector_dyn<T> const& input) const = 0;
 
-        virtual matrix_dyn<T>
-        fast_back_propagation(
-            size_t layer_num,
-            matrix_dyn<T> const& delta) const = 0;
+        // virtual matrix_dyn<T>
+        // fast_back_propagation(
+        //     size_t layer_num,
+        //     matrix_dyn<T> const& delta) const = 0;
     };
 }
 

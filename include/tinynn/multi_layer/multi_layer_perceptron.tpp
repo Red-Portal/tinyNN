@@ -9,13 +9,23 @@ namespace tnn
     multi_layer_perceptron<T, InSize>::
     multi_layer_perceptron(
         std::function<double(double)> const& activation_func,
-        std::vector<size_t> const& layer_setting)
+        std::vector<size_t> const& layer_setting,
+        std::vector<vector_dyn<T>> const& bias)
         : _layers(set_layers(layer_setting)),
+          _bias(),
           _activation_fun(activation_func)
     {
         auto reg_distr = std::uniform_real_distribution<double>(0, 1);
         auto seed_gen = std::random_device();
         auto rand_gen = std::mt19937(seed_gen());
+
+        _bias.reserve(bias.size());
+        // auto bias_row = blaze::Row<matrix_dyn<T>>();
+        for(auto const& i : bias)
+        {
+            _bias.emplace_back(matrix_dyn<T>(1, i.size()));
+            row(_bias.back(), 0) = blaze::trans(i);
+        }
 
         for(auto& i : _layers)
         {
@@ -37,6 +47,7 @@ namespace tnn
 
         // std::cout << "correction" << std::endl << correction <<std::endl;
         _layers[layer_num] += correction;
+        // std::cout << "corrected" << std::endl << _layers[layer_num]<<std::endl;
     }
 
     template<typename T, size_t InSize>
@@ -63,8 +74,9 @@ namespace tnn
     feed_layer(size_t layer_num,
                vector_dyn<T> const& input) const
     {
-        return blaze::trans(
-            blaze::trans(input) * _layers[layer_num]);
+        auto result = blaze::evaluate(blaze::trans(input) * _layers[layer_num]);
+        result = result + blaze::row(_bias[layer_num], 0);
+        return blaze::trans(result);
     }
 
     template<typename T, size_t InSize>
@@ -77,14 +89,14 @@ namespace tnn
         return result;
     }
 
-    template<typename T, size_t InSize>
-    matrix_dyn<T>
-    multi_layer_perceptron<T, InSize>::
-    fast_back_propagation(size_t layer_num,
-                          matrix_dyn<T> const& delta) const 
-    {
-        return delta * blaze::trans(_layers[layer_num]);
-    }
+    // template<typename T, size_t InSize>
+    // matrix_dyn<T>
+    // multi_layer_perceptron<T, InSize>::
+    // fast_back_propagation(size_t layer_num,
+    //                       matrix_dyn<T> const& delta) const 
+    // {
+    //     return delta * blaze::trans(_layers[layer_num]);
+    // }
 
     template<typename T, size_t InSize>
     vector_dyn<T>
@@ -96,9 +108,10 @@ namespace tnn
         for(auto i = 0u; i < InSize; ++i)
             f(0, i) = x[i];
 
-        for(auto const& layer : _layers)
+        for(auto it = 0u; it < _layers.size(); ++it)
         {
-            f *= layer;
+            f *= _layers[it];
+            f += _bias[it];
             f = blaze::map(f, _activation_fun); 
         }
 
@@ -113,9 +126,10 @@ namespace tnn
     operator()(matrix_dyn<T> const& x) const
     {
         auto f = matrix_dyn<T>(x);
-        for(auto const& layer : _layers)
+        for(auto it = 0u; it < _layers.size(); ++it)
         {
-            f *= layer;
+            f *= _layers[it];
+            f += _bias[it];
             f = blaze::map(f, _activation_fun); 
         }
         return f;

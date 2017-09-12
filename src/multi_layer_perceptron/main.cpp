@@ -10,27 +10,23 @@ template<typename T>
 blaze::DynamicMatrix<T>
 make_train_data()
 {
-    auto dyn_matrix = blaze::DynamicMatrix<T>(4, 4);
+    auto dyn_matrix = blaze::DynamicMatrix<T>(4, 3);
 
     dyn_matrix(0, 0) = 0;
     dyn_matrix(0, 1) = 0;
-    dyn_matrix(0, 2) = 1;
-    dyn_matrix(0, 3) = 0;
+    dyn_matrix(0, 2) = 0;
 
     dyn_matrix(1, 0) = 0;
     dyn_matrix(1, 1) = 1;
     dyn_matrix(1, 2) = 1;
-    dyn_matrix(1, 3) = 1;
 
     dyn_matrix(2, 0) = 1;
     dyn_matrix(2, 1) = 0;
     dyn_matrix(2, 2) = 1;
-    dyn_matrix(2, 3) = 1;
 
     dyn_matrix(3, 0) = 1;
     dyn_matrix(3, 1) = 1;
-    dyn_matrix(3, 2) = 1;
-    dyn_matrix(3, 3) = 0;
+    dyn_matrix(3, 2) = 0;
 
     return dyn_matrix;
 }
@@ -40,14 +36,25 @@ int main()
     namespace activ_f = tnn::activation_function;
 
     auto layer_setting = std::vector<size_t>({2, 1});
+
+    auto layer_1 = tnn::vector_dyn<double>(2);
+    auto layer_2 = tnn::vector_dyn<double>(1);
+    layer_1[0] = 0;
+    layer_1[1] = 0.5;
+    layer_2[0] = 0;
+
+    auto bias_setting =
+        std::vector<tnn::vector_dyn<double>>({layer_1, layer_2});
     auto dyn_matrix = make_train_data<double>();
 
-    double eta = 1;
-    auto iterations = 1000000;
+    double eta = 0.1;
+    auto iterations = 10000;
 
     auto start = std::chrono::steady_clock::now();
-    auto trainer = tnn::multi_layer_trainer<double, 3>(
-        layer_setting, eta, iterations, activ_f::sigmoid,
+    auto trainer = tnn::multi_layer_trainer<double, 2>(
+        layer_setting,
+        bias_setting,
+        eta, iterations, activ_f::sigmoid,
         activ_f::derived<activ_f::sigmoid>, false);
 
     auto model  = trainer.train(dyn_matrix);
@@ -68,10 +75,9 @@ int main()
     std::vector<std::chrono::duration<long long, std::nano>> bench;
 
     {
-        blaze::StaticVector<double, 3> test;
+        blaze::StaticVector<double, 2> test;
         test[0] = 0;
         test[1] = 0;
-        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);
@@ -83,10 +89,9 @@ int main()
     }
 
     {
-        blaze::StaticVector<double, 3> test;
+        blaze::StaticVector<double, 2> test;
         test[0] = 1;
         test[1] = 0;
-        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);
@@ -98,10 +103,9 @@ int main()
     }
 
     {
-        blaze::StaticVector<double, 3> test;
+        blaze::StaticVector<double, 2> test;
         test[0] = 0;
         test[1] = 1;
-        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);
@@ -113,10 +117,9 @@ int main()
     }
 
     {
-        blaze::StaticVector<double, 3> test;
+        blaze::StaticVector<double, 2> test;
         test[0] = 1;
         test[1] = 1;
-        test[2] = 1;
 
         auto start = std::chrono::steady_clock::now();
         auto result = model(test);

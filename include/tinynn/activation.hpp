@@ -7,7 +7,7 @@
 namespace tnn::activation_function
 {
     inline double sigmoid(double x) noexcept
-    { return std::exp(x) / (std::exp(x) + 1); }
+    { return 1 / (std::exp(-x) + 1); }
 
     inline double identity(double x) noexcept
     { return x; }
@@ -23,7 +23,7 @@ namespace tnn::activation_function
 
     template<>
     double derived<sigmoid>(double x) noexcept
-    { return sigmoid(x) * (1 - sigmoid(x)); }
+    { auto y = sigmoid(x); return y * (1 - y); }
 
     template<>
     double derived<identity>(double x) noexcept

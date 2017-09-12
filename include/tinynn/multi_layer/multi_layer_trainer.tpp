@@ -15,21 +15,24 @@ namespace tnn
     multi_layer_trainer<T, InSize>::
     multi_layer_trainer(
         std::vector<size_t> const& layer_setting,
+        std::vector<vector_dyn<T>> const& bias,
         double eta,
         uint64_t max_iterations,
         std::function<double(double)> const& activation_fun,
         std::function<double(double)> const& activation_fun_derived,
         bool verbose,
-        bool history) :_eta(eta),
-                       _max_iterations(max_iterations),
-                       _trainee(nullptr),
-                       _history(),
-                       _distr(),
-                       _verbose(verbose),
-                       _save_history(history),
-                       _activation_func(activation_fun),
-                       _activation_func_derived(activation_fun_derived),
-                       _layer_setting(layer_setting)
+        bool history)
+        :_eta(eta),
+         _max_iterations(max_iterations),
+         _trainee(nullptr),
+         _history(),
+         _distr(),
+         _verbose(verbose),
+         _save_history(history),
+         _activation_func(std::move(activation_fun)),
+         _activation_func_derived(std::move(activation_fun_derived)),
+         _layer_setting(std::move(layer_setting)),
+         _bias(std::move(bias))
     {
         std::random_device seed_gen;
         _random_engine.seed(seed_gen());
@@ -87,7 +90,7 @@ namespace tnn
         auto result =
             perceptron(
                 matrix_dyn<T>(
-                    submatrix(train_data, 0, 0, cols, InSize)));
+                    submatrix(train_data, 0, 0, rows, InSize)));
 
         auto answer = 
             blaze::Submatrix<matrix_dyn<T> const>(
@@ -188,7 +191,7 @@ namespace tnn
                 correction(i, j) = y[i] * delta[j];
         }
 
-        return _eta * correction;
+        return  _eta * correction;
     }
 
     template<typename T, size_t InSize>
@@ -200,6 +203,7 @@ namespace tnn
     {
         auto y = output_per_layer;
         auto Fds = std::vector<vector_dyn<T>>(y.size() - 1);
+        auto deltas = std::vector<vector_dyn<T>>(Fds.size());
 
         std::transform(
             std::next(y.begin()), y.end(), Fds.begin(),
@@ -224,16 +228,12 @@ namespace tnn
         // {
         //     std::cout << i << std::endl;
         // }
-
+        
+        
         auto delta = vector_dyn<T>((answer - y.back()) * Fds.back());
-
-        //std::cout << "delta last: " << std::endl << delta << std::endl;
-
         auto layer_num = _layer_setting.size();
-
-        _trainee->update_weight(
-            layer_num - 1,
-            compute_correction(y[y.size() - 2], delta));
+        deltas[layer_num - 1] = delta;
+        // std::cout << "delta first: " << std::endl << delta << std::endl;
 
         for(auto i = 0u; i < layer_num - 1; ++i)
         {
@@ -242,11 +242,16 @@ namespace tnn
 
             delta = Fds[hidden_idx] *
                 _trainee->eval_weight_delta(output_idx, delta);
-            //std::cout << "delta first: " << std::endl << delta << std::endl;
+            // std::cout << "delta: " << std::endl
+            //           << delta << std::endl;
 
+            deltas[hidden_idx] = delta;
+        }
+        
+        for(auto i = 0u; i < layer_num; ++i)
+        {
             _trainee->update_weight(
-                hidden_idx,
-                compute_correction(y[hidden_idx], delta));
+                i, compute_correction(y[i], deltas[i]));
         }
     }
     
@@ -292,7 +297,8 @@ namespace tnn
         auto _perceptron
             = std::make_unique<multi_layer_perceptron<T, InSize>>(
                 _activation_func,
-                _layer_setting);
+                std::move(_layer_setting),
+                std::move(_bias));
 
         _trainee = _perceptron.get();
 

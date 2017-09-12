@@ -23,6 +23,7 @@ namespace tnn
     {
     private:
         std::vector<matrix_dyn<T>> _layers;
+        std::vector<matrix_dyn<T>> _bias;
         std::function<double(double)> _activation_fun;
 
         virtual vector_dyn<T> 
@@ -40,14 +41,11 @@ namespace tnn
         feed_layer(size_t layer_num,
                    vector_dyn<T> const& input) const final;
 
-        virtual matrix_dyn<T>
-        fast_back_propagation(size_t layer_num,
-                              matrix_dyn<T> const& delta) const final;
-
     public:
         inline multi_layer_perceptron(
             std::function<double(double)> const& activation_func,
-            std::vector<size_t> const& layer_setting);
+            std::vector<size_t> const& layer_setting,
+            std::vector<vector_dyn<T>> const& bias);
 
         vector_dyn<T>
         operator()(vector<T, InSize> const& x) const;

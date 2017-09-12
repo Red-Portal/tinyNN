@@ -41,6 +41,7 @@ namespace tnn
         std::function<double(double)> _activation_func;
         std::function<double(double)> _activation_func_derived;
         std::vector<size_t> _layer_setting;
+        std::vector<vector_dyn<T>> _bias;
 
         inline std::vector<vector_dyn<T>>
         forward_propagate(vector<T, InSize> const& input) const;
@@ -85,6 +86,7 @@ namespace tnn
     public:
         inline multi_layer_trainer(
             std::vector<size_t> const& layer_setting,
+            std::vector<vector_dyn<T>> const& bias,
             double eta, uint64_t max_iterations,
             std::function<double(double)> const& activation_fun,
             std::function<double(double)> const& activation_derived,
